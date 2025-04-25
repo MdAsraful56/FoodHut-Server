@@ -48,6 +48,20 @@ async function run() {
         res.send(result);
     })
 
+    // cart related API 
+    app.post('/carts', async(req, res) => {
+        const item = req.body;
+        const result = await cartsCollection.insertOne(item);
+        res.send(result);
+    })
+
+    app.get('/carts', async(req, res) => {
+        const email = req.query.email;
+        const query = { email: email };
+        const result = await cartsCollection.find(query).toArray();
+        res.send(result);
+    })
+
 
 
     // Send a ping to confirm a successful connection
