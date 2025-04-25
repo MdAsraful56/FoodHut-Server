@@ -34,6 +34,7 @@ async function run() {
 
     const menuCollection = client.db('FoodHutDB').collection('menus');
     const reviewCollection = client.db('FoodHutDB').collection('reviews');
+    const cartsCollection = client.db('FoodHutDB').collection('carts');
 
 
 
