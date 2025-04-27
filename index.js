@@ -39,6 +39,8 @@ async function run() {
 
 
 
+
+    // users relataed API 
     app.post('/users', async(req, res) => {
         const user = req.body;
         const result = await userCollection.insertOne(user);
@@ -50,13 +52,41 @@ async function run() {
         res.send(result);
     })
 
-    app.get('/menu', async (req, res) => {
+    app.delete('/users/:id', async(req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await userCollection.deleteOne(query);
+        res.send(result);
+    })
+
+    app.patch('/users/admin/:id', async(req, res) => {
+        const id = req.params.id;
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+            $set: {
+                role: 'admin'
+            }
+        }
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+    })
+
+    // menu related API 
+    app.get('/menus', async (req, res) => {
         const result = await menuCollection.find().toArray();
         res.send(result);
     })
 
-    app.get('/reviews', async(req, res) => {
-        const result = await reviewCollection.find().toArray();
+    app.post('/menus', async(req, res) => {
+        const menu = req.body;
+        const result = await menuCollection.insertOne(menu);
+        res.send(result);
+    })
+
+    app.delete('/menus/:id' , async(req, res) => {
+        const id = req.params.id;
+        const query = { _id: new ObjectId(id) };
+        const result = await menuCollection.deleteOne(query);
         res.send(result);
     })
 
@@ -78,6 +108,11 @@ async function run() {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
         const result = await cartsCollection.deleteOne(query);
+        res.send(result);
+    })
+
+    app.get('/reviews', async(req, res) => {
+        const result = await reviewCollection.find().toArray();
         res.send(result);
     })
 
