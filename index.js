@@ -1,7 +1,9 @@
 const express = require('express');
+import { PaymentIntents } from './node_modules/stripe/esm/resources/PaymentIntents';
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
@@ -10,6 +12,7 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 
 
@@ -139,10 +142,10 @@ async function run() {
         try {
             const id = req.params.id;
             const result = await menuCollection.deleteOne({ _id: new ObjectId(id) });
-            res.send(result);
+            res.json(result);  // Send the result to the front-end (including deletedCount)
         } catch (err) {
             console.error("Delete failed:", err);
-            res.status(500).send({ message: 'Internal server error' });
+            res.status(500).json({ message: 'Internal server error' });
         }
     });
     
@@ -172,6 +175,21 @@ async function run() {
         const result = await reviewCollection.find().toArray();
         res.send(result);
     })
+
+
+    // payment internt 
+    app.post('/create-payment-intent', async (req, res) => {
+        const { price } = req.body;
+        const amount = price * 100; // Convert to cents
+
+        const paymentIntent = await stripe.PaymentIntents.create({
+            amount,
+            currency: 'usd',
+            payment_method_types: ['card'],
+        });
+        res.send({clientSecret: paymentIntent.client_secret,});
+    });
+
 
 
 
