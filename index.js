@@ -1,12 +1,11 @@
 const express = require('express');
-import { PaymentIntents } from './node_modules/stripe/esm/resources/PaymentIntents';
 const app = express();
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
-const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
+const stripe = require('stripe')(process.env.STRIPE_API_KEY);
 
 
 // middleware
@@ -40,6 +39,7 @@ async function run() {
     const menuCollection = client.db('FoodHutDB').collection('menus');
     const reviewCollection = client.db('FoodHutDB').collection('reviews');
     const cartsCollection = client.db('FoodHutDB').collection('carts');
+    const paymentsCollection = client.db('FoodHutDB').collection('payments');
 
     // jwt related API 
     app.post('/jwt', async(req, res) => {
@@ -177,12 +177,14 @@ async function run() {
     })
 
 
+    // payment related API
+
     // payment internt 
     app.post('/create-payment-intent', async (req, res) => {
         const { price } = req.body;
-        const amount = price * 100; // Convert to cents
-
-        const paymentIntent = await stripe.PaymentIntents.create({
+        const amount =Math.round(price * 100); // Convert to cents
+        // console.log(amount);
+        const paymentIntent = await stripe.paymentIntents.create({
             amount,
             currency: 'usd',
             payment_method_types: ['card'],
@@ -190,6 +192,23 @@ async function run() {
         res.send({clientSecret: paymentIntent.client_secret,});
     });
 
+    app.post('/payments', async(req, res) => {
+        const payment = req.body;
+        const paymentResult = await paymentsCollection.insertOne(payment);
+        // delete is item 
+        const query = { _id: {
+            $in: payment.cartItems.map(id => new ObjectId(id))
+        }}
+        const deleteResult = await cartsCollection.deleteMany(query);
+        res.send({paymentResult, deleteResult});
+    })
+
+    app.get('/payments/:email', async(req, res) => {
+        const email = req.params.email;
+        const query = { email: email };
+        const result = await paymentsCollection.find(query).toArray();
+        res.send(result);
+    })
 
 
 
